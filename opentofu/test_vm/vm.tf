@@ -1,21 +1,22 @@
 variable "vm_count" {
   description = "Number of VMs to create"
-  default     = 1
+  default     = 5
 }
 
 resource "proxmox_virtual_environment_vm" "vm" {
   count       = var.vm_count
   name        = format("vm-%02d", count.index + 1)
-  migrate     = true
+  migrate     = false
   description = "Managed by OpenTofu"
   tags        = ["opentofu", "test"]
   on_boot     = true
 
-  node_name = format("pve-%02d", count.index + 1)
+  # Static node name (single-node cluster)
+  node_name = "pve"
 
   clone {
-    vm_id     = "2404"
-    node_name = "pve-01"
+    vm_id     = "2204"
+    node_name = "pve"  # Source node (matches target node here)
     retries   = 2
   }
 
@@ -45,7 +46,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   disk {
     size         = "40"
     interface    = "virtio0"
-    datastore_id = "proxmox-data-01"
+    datastore_id = "local-lvm"
     file_format  = "raw"
   }
 
@@ -55,7 +56,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   }
 
   initialization {
-    datastore_id = "proxmox-data-01"
+    datastore_id = "local-lvm"
     ip_config {
       ipv4 {
         address = "dhcp"
